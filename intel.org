@@ -1,0 +1,126 @@
+# -*- org-export-babel-evaluate: nil -*-
+#+TITLE: intel tests
+#+AUTHOR: Arthur Krause
+#+LATEX_HEADER: \usepackage[margin=2cm,a4paper]{geometry}
+#+STARTUP: overview indent
+#+TAGS: Arthur(A) noexport(n) deprecated(d)
+#+EXPORT_SELECT_TAGS: export
+#+EXPORT_EXCLUDE_TAGS: noexport
+#+SEQ_TODO: TODO(t!) STARTED(s!) WAITING(w!) | DONE(d!) CANCELLED(c!) DEFERRED(f!)
+
+
+* DoE
+#+begin_src R :results output :session *R* :exports both
+require(DoE.base);
+  expDesign <- fac.design (
+           nfactors=2,
+           replications=10,
+           repeat.only=FALSE,
+           randomize=TRUE,
+           seed=10373,
+           nlevels=c(5, 3),
+           factor.names=list(
+	         test=c("seq", "seq-simd", "seq-inverted-simd", "seq-inverted-simd-aligned", "parallel-inverted-simd-aligned"),
+               size=c(1000, 2000, 4000)));               
+  export.design(expDesign,
+                path=".",
+                filename=NULL,
+                type="csv",
+                replace=TRUE,
+                response.names=c("time"));
+#+end_src
+
+#+RESULTS:
+#+begin_example
+Loading required package: DoE.base
+Loading required package: grid
+Loading required package: conf.design
+
+Attaching package: ‘DoE.base’
+
+The following objects are masked from ‘package:stats’:
+
+    aov, lm
+
+The following object is masked from ‘package:graphics’:
+
+    plot.design
+
+The following object is masked from ‘package:base’:
+
+    lengths
+ creating full factorial with 15 runs ...
+#+end_example
+
+* plot
+
+** todos
+#+begin_src R :results output graphics :file tempos.png :exports both :width 1200 :height 500 :session *Rs*
+library(dplyr);
+library(ggplot2); 
+
+df <- read.csv("./output.csv");
+
+k <- df %>% select(test,size,time) %>% 
+ 	      arrange(test,size,time)  %>% 
+    	      group_by(test,size) %>%
+	      summarize(N=n(), mean_time=mean(time),  se_time=3*sd(time)/sqrt(n())) %>%
+ as.data.frame();
+
+#k <- k[k$size==2000,]
+
+k$test <- factor(k$test, levels=c("seq", "seq-simd", "seq-inverted-simd", "seq-inverted-simd-aligned", "parallel-inverted-simd-aligned"))
+ggplot(k, aes(x=as.factor(test), y=mean_time))+
+
+  geom_bar(stat="identity", position=position_dodge(), width=0.90, aes(fill=test)) + 
+
+ scale_fill_manual(breaks=c("seq", "seq-simd", "seq-inverted-simd", "seq-inverted-simd-aligned", "parallel-inverted-simd-aligned"), 
+values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
+
+  theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
+
+
+
+  facet_wrap(~size, scale="free");
+
+
+#+end_src
+
+#+RESULTS:
+[[file:tempos.png]]
+
+** primeiro
+#+begin_src R :results output graphics :file tempos1.png :exports both :width 1200 :height 500 :session *Rs*
+library(dplyr);
+library(ggplot2); 
+
+df <- read.csv("./output.csv");
+
+k <- df %>% select(test,size,time) %>% 
+ 	      arrange(test,size,time)  %>% 
+    	      group_by(test,size) %>%
+	      summarize(N=n(), mean_time=mean(time),  se_time=3*sd(time)/sqrt(n())) %>%
+ as.data.frame();
+
+k <- k[k$size==4000,]
+k <- k[k$test=="seq", k$test=="seq-simd",]
+k$test <- factor(k$test, levels=c("seq", "seq-simd"))
+ggplot(k, aes(x=as.factor(test), y=mean_time))+
+
+  geom_bar(stat="identity", position=position_dodge(), width=0.90, aes(fill=test)) + 
+
+ scale_fill_manual(breaks=c("seq", "seq-simd"), 
+values=c("#E69F00", "#56B4E9")) +
+
+  theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
+
+
+
+  facet_wrap(~size, scale="free");
+
+
+#+end_src
+
+#+RESULTS:
+[[file:tempos1.png]]
+
