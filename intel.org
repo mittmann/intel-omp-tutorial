@@ -90,7 +90,7 @@ values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
 [[file:tempos.png]]
 
 ** primeiro
-#+begin_src R :results output graphics :file tempos1.png :exports both :width 1200 :height 500 :session *Rs*
+#+begin_src R :results output graphics :file tempos1.png :exports both :width 600 :height 300 :session *Rs*
 library(dplyr);
 library(ggplot2); 
 
@@ -103,24 +103,130 @@ k <- df %>% select(test,size,time) %>%
  as.data.frame();
 
 k <- k[k$size==4000,]
-k <- k[k$test=="seq", k$test=="seq-simd",]
+k <- k[k$test=="seq" | k$test=="seq-simd",]
+k$diff <- round((1 / (k$mean_time / k[k$test=="seq",]$mean_time)), 3);
 k$test <- factor(k$test, levels=c("seq", "seq-simd"))
 ggplot(k, aes(x=as.factor(test), y=mean_time))+
 
   geom_bar(stat="identity", position=position_dodge(), width=0.90, aes(fill=test)) + 
+ geom_text(aes(label=paste(diff, "x")), vjust=-0.3) +
 
  scale_fill_manual(breaks=c("seq", "seq-simd"), 
 values=c("#E69F00", "#56B4E9")) +
 
   theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
 
+theme (axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) ;
 
-
-  facet_wrap(~size, scale="free");
 
 
 #+end_src
 
 #+RESULTS:
 [[file:tempos1.png]]
+
+** segundo
+#+begin_src R :results output graphics :file tempos2.png :exports both :width 600 :height 300 :session *Rs*
+library(dplyr);
+library(ggplot2); 
+
+df <- read.csv("./output.csv");
+
+k <- df %>% select(test,size,time) %>% 
+ 	      arrange(test,size,time)  %>% 
+    	      group_by(test,size) %>%
+	      summarize(N=n(), mean_time=mean(time),  se_time=3*sd(time)/sqrt(n())) %>%
+ as.data.frame();
+
+k <- k[k$size==4000,]
+k <- k[k$test=="seq" | k$test=="seq-simd" | k$test=="seq-inverted-simd",]
+k$diff <- 1 / (k$mean_time / k[k$test=="seq",]$mean_time);
+k$test <- factor(k$test, levels=c("seq", "seq-simd", "seq-inverted-simd"))
+ggplot(k, aes(x=as.factor(test), y=mean_time))+
+
+  geom_bar(stat="identity", position=position_dodge(), width=0.90, aes(fill=test)) + 
+ geom_text(aes(label=paste(diff, "x")), vjust=-0.3) +
+
+ scale_fill_manual(breaks=c("seq", "seq-simd", "seq-inverted-simd"), 
+values=c("#E69F00", "#56B4E9", "#009E73")) +
+
+  theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
+theme (axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) ;
+
+
+
+#+end_src
+
+#+RESULTS:
+[[file:tempos2.png]]
+
+** terceiro
+#+begin_src R :results output graphics :file tempos3.png :exports both :width 600 :height 300 :session *Rs*
+library(dplyr);
+library(ggplot2); 
+
+df <- read.csv("./output.csv");
+
+k <- df %>% select(test,size,time) %>% 
+ 	      arrange(test,size,time)  %>% 
+    	      group_by(test,size) %>%
+	      summarize(N=n(), mean_time=mean(time),  se_time=3*sd(time)/sqrt(n())) %>%
+ as.data.frame();
+
+k <- k[k$size==4000,]
+k <- k[k$test=="seq" | k$test=="seq-simd" | k$test=="seq-inverted-simd" | k$test=="parallel-inverted-simd-aligned",]
+k$diff <- round((1 / (k$mean_time / k[k$test=="seq",]$mean_time)), 3);
+k$test <- factor(k$test, levels=c("seq", "seq-simd", "seq-inverted-simd", "parallel-inverted-simd-aligned"))
+ggplot(k, aes(x=as.factor(test), y=mean_time))+
+
+  geom_bar(stat="identity", position=position_dodge(), width=0.90, aes(fill=test)) + 
+ geom_text(aes(label=paste(diff, "x")), vjust=-0.3) +
+ scale_fill_manual(breaks=c("seq", "seq-simd", "seq-inverted-simd", "parallel-inverted-simd-aligned"), 
+values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
+
+  theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
+
+theme (axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) ;
+
+#+end_src
+
+#+RESULTS:
+[[file:tempos3.png]]
+
+** phi
+#+begin_src R :results output graphics :file tempos4.png :exports both :width 600 :height 300 :session *Rs*
+library(dplyr);
+library(ggplot2); 
+
+df <- read.csv("./output2.csv");
+
+k <- df %>% select(test,size,time) %>% 
+ 	      arrange(test,size,time)  %>% 
+    	      group_by(test,size) %>%
+	      summarize(N=n(), mean_time=mean(time),  se_time=3*sd(time)/sqrt(n())) %>%
+ as.data.frame();
+
+k <- k[k$size==4000,]
+k <- k[k$test=="seq" | k$test=="seq-simd" | k$test=="seq-inverted-simd" | k$test=="parallel-inverted-simd-aligned" | k$test=="xeon",]
+k$diff <- round((1 / (k$mean_time / k[k$test=="seq",]$mean_time)), 3);
+k$test <- factor(k$test, levels=c("seq", "seq-simd", "seq-inverted-simd", "parallel-inverted-simd-aligned", "xeon"))
+ggplot(k, aes(x=as.factor(test), y=mean_time))+
+
+  geom_bar(stat="identity", position=position_dodge(), width=0.90, aes(fill=test)) + 
+ geom_text(aes(label=paste(diff, "x")), vjust=-0.3) +
+ scale_fill_manual(breaks=c("seq", "seq-simd", "seq-inverted-simd", "parallel-inverted-simd-aligned", "xeon"), 
+values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
+
+  theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
+
+theme (axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) ;
+
+#+end_src
+
+#+RESULTS:
+[[file:tempos4.png]]
 
