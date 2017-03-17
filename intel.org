@@ -210,14 +210,14 @@ k <- df %>% select(test,size,time) %>%
  as.data.frame();
 
 k <- k[k$size==4000,]
-k <- k[k$test=="seq" | k$test=="seq-simd" | k$test=="seq-inverted-simd" | k$test=="parallel-inverted-simd-aligned" | k$test=="xeon",]
+k <- k[k$test=="seq" | k$test=="seq-simd" | k$test=="seq-inverted-simd" | k$test=="parallel-inverted-simd-aligned" | k$test=="xeon-phi",]
 k$diff <- round((1 / (k$mean_time / k[k$test=="seq",]$mean_time)), 3);
-k$test <- factor(k$test, levels=c("seq", "seq-simd", "seq-inverted-simd", "parallel-inverted-simd-aligned", "xeon"))
+k$test <- factor(k$test, levels=c("seq", "seq-simd", "seq-inverted-simd", "parallel-inverted-simd-aligned", "xeon-phi"))
 ggplot(k, aes(x=as.factor(test), y=mean_time))+
 
   geom_bar(stat="identity", position=position_dodge(), width=0.90, aes(fill=test)) + 
  geom_text(aes(label=paste(diff, "x")), vjust=-0.3) +
- scale_fill_manual(breaks=c("seq", "seq-simd", "seq-inverted-simd", "parallel-inverted-simd-aligned", "xeon"), 
+ scale_fill_manual(breaks=c("seq", "seq-simd", "seq-inverted-simd", "parallel-inverted-simd-aligned", "xeon-phi"), 
 values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
 
   theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
