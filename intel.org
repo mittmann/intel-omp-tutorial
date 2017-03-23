@@ -31,27 +31,29 @@ require(DoE.base);
 #+end_src
 
 #+RESULTS:
-#+begin_example
-Loading required package: DoE.base
-Loading required package: grid
-Loading required package: conf.design
+:  creating full factorial with 15 runs ...
 
-Attaching package: ‘DoE.base’
+* script
+#+begin_src sh :results output :exports both :tangle exp.sh
+#!/bin/bash
 
-The following objects are masked from ‘package:stats’:
+while IFS="," read f1 f2 f3 f4 f5 f6 f7 f8
+do
+        if [ "$f1" != "\"name\"" ]; then #if its not the first line
+                  TEST=${f5//\"/}
+                  SIZE=${f6//\"/}
+                  TIME=$(./intel-workshop/icc-avx/matrix-mult/src/$TEST\.exec $SIZE | grep time | awk '{print $2}')
+                  else
+                        TIME=0
+                  fi
+                  echo "$f1,$f2,$f3,$f4,$f5,$f6,$f7,$TIME"
+        else
+              #if its the first line just repeat it
+              echo "$f1,$f2,$f3,$f4,$f5,$f6,$f7,$f8"
+        fi
+done < expDesign.csv > output.csv
 
-    aov, lm
-
-The following object is masked from ‘package:graphics’:
-
-    plot.design
-
-The following object is masked from ‘package:base’:
-
-    lengths
- creating full factorial with 15 runs ...
-#+end_example
-
+#+end_src
 * plot
 
 ** todos
@@ -117,6 +119,7 @@ values=c("#E69F00", "#56B4E9")) +
   theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
 
 theme (axis.text.x=element_blank(),
+axis.title.x=element_blank(),
         axis.ticks.x=element_blank()) ;
 
 
@@ -141,7 +144,7 @@ k <- df %>% select(test,size,time) %>%
 
 k <- k[k$size==4000,]
 k <- k[k$test=="seq" | k$test=="seq-simd" | k$test=="seq-inverted-simd",]
-k$diff <- 1 / (k$mean_time / k[k$test=="seq",]$mean_time);
+k$diff <- round((1 / (k$mean_time / k[k$test=="seq",]$mean_time)), 3);
 k$test <- factor(k$test, levels=c("seq", "seq-simd", "seq-inverted-simd"))
 ggplot(k, aes(x=as.factor(test), y=mean_time))+
 
@@ -153,6 +156,7 @@ values=c("#E69F00", "#56B4E9", "#009E73")) +
 
   theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
 theme (axis.text.x=element_blank(),
+axis.title.x=element_blank(),
         axis.ticks.x=element_blank()) ;
 
 
@@ -189,6 +193,7 @@ values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
   theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
 
 theme (axis.text.x=element_blank(),
+axis.title.x=element_blank(),
         axis.ticks.x=element_blank()) ;
 
 #+end_src
@@ -223,10 +228,35 @@ values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
   theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
 
 theme (axis.text.x=element_blank(),
+axis.title.x=element_blank(),
         axis.ticks.x=element_blank()) ;
 
 #+end_src
 
 #+RESULTS:
 [[file:tempos4.png]]
+
+* DoE Vtune
+#+begin_src R :results output :session *vtune* :exports both
+require(DoE.base);
+  cacheDesign <- fac.design (
+           nfactors=2,
+           replications=10,
+           repeat.only=FALSE,
+           randomize=TRUE,
+           seed=10373,
+           nlevels=c(5, 3),
+           factor.names=list(
+	         test=c("seq", "seq-simd", "seq-inverted-simd", "seq-inverted-simd-aligned", "parallel-inverted-simd-aligned"),
+               size=c(1000, 2000, 4000)));               
+  export.design(cacheDesign,
+                path=".",
+                filename=NULL,
+                type="csv",
+                replace=TRUE,
+                response.names=c("L1_hit", "L1_load"));
+#+end_src
+
+#+RESULTS:
+:  creating full factorial with 15 runs ...
 
