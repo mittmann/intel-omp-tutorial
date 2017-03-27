@@ -92,7 +92,7 @@ values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
 [[file:tempos.png]]
 
 ** primeiro
-#+begin_src R :results output graphics :file tempos1.png :exports both :width 600 :height 300 :session *Rs*
+#+begin_src R :results output graphics :file tempos1.png :exports both :width 320 :height 300 :session *Rs*
 library(dplyr);
 library(ggplot2); 
 
@@ -104,24 +104,31 @@ k <- df %>% select(test,size,time) %>%
 	      summarize(N=n(), mean_time=mean(time),  se_time=3*sd(time)/sqrt(n())) %>%
  as.data.frame();
 
-k <- k[k$size==4000,]
-k <- k[k$test=="seq" | k$test=="seq-simd",]
-k$diff <- round((1 / (k$mean_time / k[k$test=="seq",]$mean_time)), 3);
-k$test <- factor(k$test, levels=c("seq", "seq-simd"))
-ggplot(k, aes(x=as.factor(test), y=mean_time))+
+levels(k$test)[levels(k$test)=="seq"] <- "Simples"
+levels(k$test)[levels(k$test)=="seq-simd"] <- "AVX"
 
-  geom_bar(stat="identity", position=position_dodge(), width=0.90, aes(fill=test)) + 
+names(k)[names(k)=="test"] <- "Otimização"
+
+
+k <- k[k$size==4000,]
+k <- k[k$Otimização=="Simples" | k$Otimização=="AVX",]
+k$diff <- round((1 / (k$mean_time / k[k$Otimização=="Simples",]$mean_time)), 3);
+k$Otimização <- factor(k$Otimização, levels=c("Simples", "AVX"))
+ggplot(k, aes(x=as.factor(Otimização), y=mean_time))+
+
+  geom_bar(stat="identity", position=position_dodge(), width=0.85, aes(fill=Otimização)) + 
  geom_text(aes(label=paste(diff, "x")), vjust=-0.3) +
 
- scale_fill_manual(breaks=c("seq", "seq-simd"), 
+ scale_fill_manual(breaks=c("Simples", "AVX"), 
 values=c("#E69F00", "#56B4E9")) +
 
   theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
 
 theme (axis.text.x=element_blank(),
 axis.title.x=element_blank(),
-        axis.ticks.x=element_blank()) ;
-
+        axis.ticks.x=element_blank(),
+legend.title = element_text(size=20, face="bold"),
+legend.text = element_text(size = 16)) ;
 
 
 #+end_src
@@ -130,7 +137,7 @@ axis.title.x=element_blank(),
 [[file:tempos1.png]]
 
 ** segundo
-#+begin_src R :results output graphics :file tempos2.png :exports both :width 600 :height 300 :session *Rs*
+#+begin_src R :results output graphics :file tempos2.png :exports both :width 480 :height 300 :session *Rs*
 library(dplyr);
 library(ggplot2); 
 
@@ -142,23 +149,33 @@ k <- df %>% select(test,size,time) %>%
 	      summarize(N=n(), mean_time=mean(time),  se_time=3*sd(time)/sqrt(n())) %>%
  as.data.frame();
 
-k <- k[k$size==4000,]
-k <- k[k$test=="seq" | k$test=="seq-simd" | k$test=="seq-inverted-simd",]
-k$diff <- round((1 / (k$mean_time / k[k$test=="seq",]$mean_time)), 3);
-k$test <- factor(k$test, levels=c("seq", "seq-simd", "seq-inverted-simd"))
-ggplot(k, aes(x=as.factor(test), y=mean_time))+
+levels(k$test)[levels(k$test)=="seq"] <- "Simples"
+levels(k$test)[levels(k$test)=="seq-simd"] <- "AVX"
+levels(k$test)[levels(k$test)=="seq-inverted-simd"] <- "Inversão dos Laços"
 
-  geom_bar(stat="identity", position=position_dodge(), width=0.90, aes(fill=test)) + 
+
+names(k)[names(k)=="test"] <- "Otimização"
+
+
+k <- k[k$size==4000,]
+k <- k[k$Otimização=="Simples" | k$Otimização=="AVX" | k$Otimização=="Inversão dos Laços",]
+k$diff <- round((1 / (k$mean_time / k[k$Otimização=="Simples",]$mean_time)), 3);
+k$Otimização <- factor(k$Otimização, levels=c("Simples", "AVX", "Inversão dos Laços"))
+ggplot(k, aes(x=as.factor(Otimização), y=mean_time))+
+
+  geom_bar(stat="identity", position=position_dodge(), width=0.85, aes(fill=Otimização)) + 
  geom_text(aes(label=paste(diff, "x")), vjust=-0.3) +
 
- scale_fill_manual(breaks=c("seq", "seq-simd", "seq-inverted-simd"), 
-values=c("#E69F00", "#56B4E9", "#009E73")) +
+ scale_fill_manual(breaks=c("Simples", "AVX", "Inversão dos Laços"), 
+values=c("#E69F00", "#56B4E9","#009E73")) +
 
   theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
+
 theme (axis.text.x=element_blank(),
 axis.title.x=element_blank(),
-        axis.ticks.x=element_blank()) ;
-
+        axis.ticks.x=element_blank(),
+legend.title = element_text(size=20, face="bold"),
+legend.text = element_text(size = 16)) ;
 
 
 #+end_src
@@ -167,7 +184,7 @@ axis.title.x=element_blank(),
 [[file:tempos2.png]]
 
 ** terceiro
-#+begin_src R :results output graphics :file tempos3.png :exports both :width 600 :height 300 :session *Rs*
+#+begin_src R :results output graphics :file tempos3.png :exports both :width 570 :height 300 :session *Rs*
 library(dplyr);
 library(ggplot2); 
 
@@ -179,30 +196,40 @@ k <- df %>% select(test,size,time) %>%
 	      summarize(N=n(), mean_time=mean(time),  se_time=3*sd(time)/sqrt(n())) %>%
  as.data.frame();
 
-k <- k[k$size==4000,]
-k <- k[k$test=="seq" | k$test=="seq-simd" | k$test=="seq-inverted-simd" | k$test=="parallel-inverted-simd-aligned",]
-k$diff <- round((1 / (k$mean_time / k[k$test=="seq",]$mean_time)), 3);
-k$test <- factor(k$test, levels=c("seq", "seq-simd", "seq-inverted-simd", "parallel-inverted-simd-aligned"))
-ggplot(k, aes(x=as.factor(test), y=mean_time))+
+levels(k$test)[levels(k$test)=="seq"] <- "Simples"
+levels(k$test)[levels(k$test)=="seq-simd"] <- "AVX"
+levels(k$test)[levels(k$test)=="seq-inverted-simd"] <- "Inversão dos Laços"
+levels(k$test)[levels(k$test)=="parallel-inverted-simd-aligned"] <- "Paralelismo OpenMP"
 
-  geom_bar(stat="identity", position=position_dodge(), width=0.90, aes(fill=test)) + 
+names(k)[names(k)=="test"] <- "Otimização"
+
+
+k <- k[k$size==4000,]
+k <- k[k$Otimização=="Simples" | k$Otimização=="AVX" | k$Otimização=="Inversão dos Laços" | k$Otimização=="Paralelismo OpenMP",]
+k$diff <- round((1 / (k$mean_time / k[k$Otimização=="Simples",]$mean_time)), 3);
+k$Otimização <- factor(k$Otimização, levels=c("Simples", "AVX", "Inversão dos Laços", "Paralelismo OpenMP"))
+ggplot(k, aes(x=as.factor(Otimização), y=mean_time))+
+
+  geom_bar(stat="identity", position=position_dodge(), width=0.85, aes(fill=Otimização)) + 
  geom_text(aes(label=paste(diff, "x")), vjust=-0.3) +
- scale_fill_manual(breaks=c("seq", "seq-simd", "seq-inverted-simd", "parallel-inverted-simd-aligned"), 
-values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
+
+ scale_fill_manual(breaks=c("Simples", "AVX", "Inversão dos Laços", "Paralelismo OpenMP"), 
+values=c("#E69F00", "#56B4E9","#009E73", "#F0E442")) +
 
   theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
 
 theme (axis.text.x=element_blank(),
 axis.title.x=element_blank(),
-        axis.ticks.x=element_blank()) ;
-
+        axis.ticks.x=element_blank(),
+legend.title = element_text(size=20, face="bold"),
+legend.text = element_text(size = 16)) ;
 #+end_src
 
 #+RESULTS:
 [[file:tempos3.png]]
 
 ** phi
-#+begin_src R :results output graphics :file tempos4.png :exports both :width 600 :height 300 :session *Rs*
+#+begin_src R :results output graphics :file tempos4.png :exports both :width 640 :height 300 :session *Rs*
 library(dplyr);
 library(ggplot2); 
 
@@ -214,27 +241,76 @@ k <- df %>% select(test,size,time) %>%
 	      summarize(N=n(), mean_time=mean(time),  se_time=3*sd(time)/sqrt(n())) %>%
  as.data.frame();
 
-k <- k[k$size==4000,]
-k <- k[k$test=="seq" | k$test=="seq-simd" | k$test=="seq-inverted-simd" | k$test=="parallel-inverted-simd-aligned" | k$test=="xeon-phi",]
-k$diff <- round((1 / (k$mean_time / k[k$test=="seq",]$mean_time)), 3);
-k$test <- factor(k$test, levels=c("seq", "seq-simd", "seq-inverted-simd", "parallel-inverted-simd-aligned", "xeon-phi"))
-ggplot(k, aes(x=as.factor(test), y=mean_time))+
+levels(k$test)[levels(k$test)=="seq"] <- "Simples"
+levels(k$test)[levels(k$test)=="seq-simd"] <- "AVX"
+levels(k$test)[levels(k$test)=="seq-inverted-simd"] <- "Inversão dos Laços"
+levels(k$test)[levels(k$test)=="parallel-inverted-simd-aligned"] <- "Paralelismo OpenMP"
+levels(k$test)[levels(k$test)=="xeon-phi"] <- "Xeon Phi"
 
-  geom_bar(stat="identity", position=position_dodge(), width=0.90, aes(fill=test)) + 
+
+names(k)[names(k)=="test"] <- "Otimização"
+
+
+k <- k[k$size==4000,]
+k <- k[k$Otimização=="Simples" | k$Otimização=="AVX" | k$Otimização=="Inversão dos Laços" | k$Otimização=="Paralelismo OpenMP" | k$Otimização=="Xeon Phi",]
+k$diff <- round((1 / (k$mean_time / k[k$Otimização=="Simples",]$mean_time)), 3);
+k$Otimização <- factor(k$Otimização, levels=c("Simples", "AVX", "Inversão dos Laços", "Paralelismo OpenMP", "Xeon Phi"))
+ggplot(k, aes(x=as.factor(Otimização), y=mean_time))+
+
+  geom_bar(stat="identity", position=position_dodge(), width=0.85, aes(fill=Otimização)) + 
  geom_text(aes(label=paste(diff, "x")), vjust=-0.3) +
- scale_fill_manual(breaks=c("seq", "seq-simd", "seq-inverted-simd", "parallel-inverted-simd-aligned", "xeon-phi"), 
-values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2")) +
+
+ scale_fill_manual(breaks=c("Simples", "AVX", "Inversão dos Laços", "Paralelismo OpenMP", "Xeon Phi"), 
+values=c("#E69F00", "#56B4E9","#009E73", "#F0E442", "#0072B2")) +
 
   theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
 
 theme (axis.text.x=element_blank(),
 axis.title.x=element_blank(),
-        axis.ticks.x=element_blank()) ;
-
+        axis.ticks.x=element_blank(),
+legend.title = element_text(size=20, face="bold"),
+legend.text = element_text(size = 16)) ;
 #+end_src
 
 #+RESULTS:
 [[file:tempos4.png]]
+
+** sem phi nem paralelo
+ #+begin_src R :results output graphics :file tempos_cache.png :exports both :width 1200 :height 500 :session *Rs*
+library(dplyr);
+library(ggplot2); 
+
+df <- read.csv("./output.csv");
+
+k <- df %>% select(test,size,time) %>% 
+ 	      arrange(test,size,time)  %>% 
+    	      group_by(test,size) %>%
+	      summarize(N=n(), mean_time=mean(time),  se_time=3*sd(time)/sqrt(n())) %>%
+ as.data.frame();
+
+k <- k[k$test=="seq" | k$test=="seq-simd" | k$test=="seq-inverted-simd" | k$test=="seq-inverted-simd-aligned",]
+k$diff <- round((1 / (k$mean_time / k[k$test=="seq",]$mean_time)), 3);
+k$test <- factor(k$test, levels=c("seq", "seq-simd", "seq-inverted-simd", "seq-inverted-simd-aligned"))
+ggplot(k, aes(x=as.factor(test), y=mean_time))+
+
+  geom_bar(stat="identity", position=position_dodge(), width=0.90, aes(fill=test)) + 
+ geom_text(aes(label=paste(diff, "x")), vjust=-0.3) +
+ scale_fill_manual(breaks=c("seq", "seq-simd", "seq-inverted-simd", "seq-inverted-simd-aligned"), 
+values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
+
+  theme_bw() + xlab("Otimização") + ylab("Tempo de Execução (segundos)")  +
+
+theme (axis.text.x=element_blank(),
+axis.title.x=element_blank(),
+        axis.ticks.x=element_blank())+
+   facet_wrap(~size, scale="free");
+
+
+#+end_src
+
+ #+RESULTS:
+ [[file:tempos_cache.png]]
+
 
 * DoE Vtune
 #+begin_src R :results output :session *vtune* :exports both
@@ -259,4 +335,56 @@ require(DoE.base);
 
 #+RESULTS:
 :  creating full factorial with 15 runs ...
+
+* vtune plot
+#+begin_src R :results output graphics :file misses.png :exports both :width 600 :height 300 :session *vtune*
+library(dplyr);
+library(ggplot2); 
+
+df <- read.csv("./c_output.csv");
+
+df$L1_miss <- (df$L1_load - df$L1_hit);
+df$miss_ratio <- (df$L1_miss / df$L1_load);
+
+k <- df %>% select(test,size,L1_hit,L1_load, L1_miss, miss_ratio) %>% 
+ 	      arrange(test,size,L1_hit,L1_load, L1_miss, miss_ratio)  %>% 
+    	      group_by(test,size) %>%
+	      summarize(N=n(), mean_hit=mean(L1_hit),  se_hit=3*sd(L1_hit)/sqrt(n()), mean_load=mean(L1_load),  se_load=3*sd(L1_load)/sqrt(n()), mean_miss=mean(L1_miss),  se_miss=3*sd(L1_miss)/sqrt(n()), mean_ratio=mean(miss_ratio),  se_ratio=3*sd(miss_ratio)/sqrt(n())) %>%
+ as.data.frame();
+
+levels(k$test)[levels(k$test)=="seq"] <- "Simples"
+levels(k$test)[levels(k$test)=="seq-simd"] <- "AVX"
+levels(k$test)[levels(k$test)=="seq-inverted-simd"] <- "Inversão dos Laços"
+levels(k$test)[levels(k$test)=="seq-inverted-simd-aligned"] <- "Alinhamento de Memória"
+
+
+names(k)[names(k)=="test"] <- "Otimização"
+
+k <- k[k$size==4000,]
+k$miss <- k$mean_load - k$mean_hit;
+k <- k[k$Otimização!="parallel-inverted-simd-aligned",]
+
+k$Otimização <- factor(k$Otimização, levels=c("Simples", "AVX", "Inversão dos Laços", "Alinhamento de Memória"))
+ggplot(k, aes(x=as.factor(Otimização), y=miss))+
+  geom_bar(stat="identity", position=position_dodge(), width=0.85, aes(fill=Otimização)) + 
+ scale_fill_manual(breaks=c("Simples", "AVX", "Inversão dos Laços", "Alinhamento de Memória"), 
+values=c("#E69F00", "#56B4E9", "#009E73", "#F0E442")) +
+
+  theme_bw() + xlab("Otimização") + ylab("Taxa de misses na cache L1")  +
+
+theme (axis.text.x=element_blank(),
+axis.title.x=element_blank(),
+        axis.ticks.x=element_blank(),
+legend.title = element_text(size=20, face="bold"),
+legend.text = element_text(size = 16)) ;
+
+
+
+
+ 
+
+#+end_src
+
+#+RESULTS:
+[[file:misses.png]]
 
